@@ -1,4 +1,4 @@
 interface:
   display_name: "股权 PDF 转可编辑 PPT"
-  short_description: "从股权穿透 PDF 重建可编辑 PowerPoint 架构图"
-  default_prompt: "Use $shareholder-pdf-to-pptx to convert this ownership-chart PDF into an editable PowerPoint."
+  short_description: "纯 Python 完整重建多级股权穿透图为可编辑 PPT"
+  default_prompt: "Use $shareholder-pdf-to-pptx and only its bundled Python scripts to convert this ownership-chart PDF into a complete multi-level editable PowerPoint."
