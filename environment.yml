@@ -1,0 +1,9 @@
+name: shareholder-pdf-to-pptx
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.11,<3.14
+  - pip
+  - pip:
+      - PyMuPDF>=1.24,<2

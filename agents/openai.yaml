@@ -1,0 +1,4 @@
+interface:
+  display_name: "股权 PDF 转可编辑 PPT"
+  short_description: "从股权穿透 PDF 重建可编辑 PowerPoint 架构图"
+  default_prompt: "Use $shareholder-pdf-to-pptx to convert this ownership-chart PDF into an editable PowerPoint."
