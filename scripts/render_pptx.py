@@ -19,13 +19,9 @@ from pptx.oxml.xmlchemy import OxmlElement
 from pptx.util import Inches, Pt
 
 
-BLACK = RGBColor(26, 26, 26)
+BLACK = RGBColor(0, 0, 0)
 WHITE = RGBColor(255, 255, 255)
-BLUE = RGBColor(33, 150, 243)
-DARK_BLUE = RGBColor(24, 118, 190)
-ORANGE = RGBColor(245, 124, 0)
-RED = RGBColor(239, 68, 68)
-FONT = "Arial Unicode MS"
+FONT = "PingFang SC"
 
 
 def number(value: Any, fallback: float) -> float:
@@ -58,7 +54,7 @@ def node_dimensions(node: dict[str, Any]) -> tuple[float, float]:
     style = node.get("style")
     shape = node.get("shape")
     if style == "person" or shape == "ellipse":
-        return number(node.get("width"), 1.20), number(node.get("height"), 1.20)
+        return number(node.get("width"), 1.30), number(node.get("height"), 0.92)
     if style == "target":
         return number(node.get("width"), 3.60), number(node.get("height"), 0.92)
     return number(node.get("width"), 3.05), number(node.get("height"), 0.92)
@@ -146,10 +142,9 @@ def add_text_box(
 
 def add_node(slide: Any, node: dict[str, Any], position: dict[str, float]) -> Any:
     style = node.get("style", "company")
-    ellipse = node.get("shape") == "ellipse" or style == "person"
-    geometry = MSO_AUTO_SHAPE_TYPE.OVAL if ellipse else MSO_AUTO_SHAPE_TYPE.RECTANGLE
+    # Black-and-white wireframe output: every node is a plain rectangle.
     shape = slide.shapes.add_shape(
-        geometry,
+        MSO_AUTO_SHAPE_TYPE.RECTANGLE,
         Inches(position["x"]),
         Inches(position["y"]),
         Inches(position["w"]),
@@ -157,21 +152,17 @@ def add_node(slide: Any, node: dict[str, Any], position: dict[str, float]) -> An
     )
     shape.name = f"node-{node['id']}"
 
-    if style == "person":
-        fill, border, text_color = ORANGE, ORANGE, WHITE
-    elif style == "target":
-        fill, border, text_color = DARK_BLUE, DARK_BLUE, WHITE
-    else:
-        fill, border, text_color = WHITE, BLUE, BLACK
+    # Black-and-white wireframe style: every node is white with a thin black border.
+    fill, border, text_color = WHITE, BLACK, BLACK
     shape.fill.solid()
     shape.fill.fore_color.rgb = fill
     shape.line.color.rgb = border
-    shape.line.width = Pt(1.25)
+    shape.line.width = Pt(1.0)
 
     label = str(node["label"])
     length = len(label.replace("\n", ""))
-    if ellipse:
-        font_size = 14.5 if length <= 4 else 12.5
+    if style == "person":
+        font_size = 14.0 if length <= 4 else 12.5
     elif length <= 10:
         font_size = 17.0
     elif length <= 20:
@@ -192,6 +183,10 @@ def add_node(slide: Any, node: dict[str, Any], position: dict[str, float]) -> An
     frame.margin_top = Inches(0.05)
     frame.margin_bottom = Inches(0.05)
     frame.vertical_anchor = MSO_ANCHOR.MIDDLE
+    # Ensure top/bottom margins are persisted for shape text rendering.
+    body_pr = frame._bodyPr
+    body_pr.set("tIns", str(int(Inches(0.05))))
+    body_pr.set("bIns", str(int(Inches(0.05))))
     paragraph = frame.paragraphs[0]
     paragraph.alignment = PP_ALIGN.CENTER
     run = paragraph.add_run()
@@ -471,15 +466,15 @@ def render(graph: dict[str, Any], output: Path) -> None:
                 height,
                 font_size=9.5 if "\n" in text else 11,
                 bold=is_badge,
-                color=WHITE if is_badge else BLACK,
-                fill=RED if is_badge else None,
-                line=RED if is_badge else None,
+                color=BLACK,
+                fill=WHITE if is_badge else None,
+                line=BLACK if is_badge else None,
                 name=f"tag-{node['id']}",
             )
         if node.get("collapsed"):
             size = 0.25
             marker = slide.shapes.add_shape(
-                MSO_AUTO_SHAPE_TYPE.OVAL,
+                MSO_AUTO_SHAPE_TYPE.RECTANGLE,
                 Inches(position["x"] + position["w"] / 2 - size / 2),
                 Inches(position["y"] - 0.40),
                 Inches(size),
@@ -487,8 +482,8 @@ def render(graph: dict[str, Any], output: Path) -> None:
             )
             marker.name = f"collapsed-{node['id']}"
             marker.fill.solid()
-            marker.fill.fore_color.rgb = BLUE
-            marker.line.color.rgb = BLUE
+            marker.fill.fore_color.rgb = WHITE
+            marker.line.color.rgb = BLACK
             marker.text = "+"
             frame = marker.text_frame
             frame.margin_left = frame.margin_right = frame.margin_top = frame.margin_bottom = 0
@@ -500,7 +495,7 @@ def render(graph: dict[str, Any], output: Path) -> None:
             set_east_asian_font(run)
             run.font.size = Pt(10)
             run.font.bold = True
-            run.font.color.rgb = WHITE
+            run.font.color.rgb = BLACK
 
     output.parent.mkdir(parents=True, exist_ok=True)
     presentation.save(output)
